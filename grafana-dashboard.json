@@ -1,0 +1,37 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "RT Streaming Platform Overview",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Kafka Producer Throughput",
+        "targets": [
+          { "expr": "rate(kafka_producer_events_total{topic=\"analytics-events\"}[1m])", "legendFormat": "Throughput (events/s)" }
+        ],
+        "datasource": "Prometheus",
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "type": "graph",
+        "title": "Kafka Producer Latency",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_latency_seconds_bucket[1m])) by (le))", "legendFormat": "p95 latency (s)" }
+        ],
+        "datasource": "Prometheus",
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "type": "graph",
+        "title": "Kafka Consumer Lag",
+        "targets": [
+          { "expr": "kafka_consumer_lag{topic=\"analytics-events\"}", "legendFormat": "Lag" }
+        ],
+        "datasource": "Prometheus",
+        "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 }
+      }
+    ],
+    "schemaVersion": 30,
+    "version": 1
+  }
+}
