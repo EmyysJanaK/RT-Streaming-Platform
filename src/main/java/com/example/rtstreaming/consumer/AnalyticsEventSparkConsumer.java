@@ -35,26 +35,45 @@ public class AnalyticsEventSparkConsumer {
                 .option("startingOffsets", "latest")
                 .load();
 
+        // Parse Kafka value as JSON and extract event fields
         Dataset<Row> events = df.selectExpr("CAST(value AS STRING) as json")
                 .select(functions.from_json(functions.col("json"), schema).as("data"))
                 .select("data.*");
 
-        StreamingQuery query = events
+        // Add watermark to handle late events and enable state cleanup for fault tolerance
+        // Watermark of 2 minutes means late events within 2 minutes of event time are allowed
+        Dataset<Row> windowedCounts = events
+                .withWatermark("timestamp", "2 minutes")
+                // Tumbling window of 1 minute, group by eventType
+                .groupBy(
+                        functions.window(functions.col("timestamp"), "1 minute"),
+                        functions.col("eventType")
+                )
+                .count();
+
+        // Write the aggregated counts to the console (or log)
+        // outputMode("update") ensures only updated counts are written per window
+        // Checkpointing ensures state and progress are saved for recovery
+        StreamingQuery query = windowedCounts
                 .writeStream()
-                .outputMode("append")
+                .outputMode("update")
                 .option("checkpointLocation", checkpointDir)
                 .foreach(new ForeachWriter<Row>() {
+                    // Open is called for each partition
                     @Override
                     public boolean open(long partitionId, long version) { return true; }
+                    // Process each aggregated row (window, eventType, count)
                     @Override
                     public void process(Row value) {
-                        logger.info("Received event: {}", value);
+                        logger.info("Window: {} | EventType: {} | Count: {}", value.getAs("window"), value.getAs("eventType"), value.getAs("count"));
                     }
+                    // Close is called after all rows in the partition are processed
                     @Override
                     public void close(Throwable errorOrNull) { }
                 })
                 .start();
 
+        // Await termination to keep the streaming job running
         query.awaitTermination();
     }
 }
