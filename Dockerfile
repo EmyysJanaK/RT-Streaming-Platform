@@ -1,3 +1,4 @@
+
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY target/rt-streaming-platform-*.jar app.jar
