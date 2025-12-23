@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class AnalyticsEventSparkConsumer {
     private static final Logger logger = LoggerFactory.getLogger(AnalyticsEventSparkConsumer.class);
 
-    public static void main(String[] args) throws StreamingQueryException {
+    public static void main(String[] args) throws StreamingQueryException, java.util.concurrent.TimeoutException {
         String kafkaBootstrap = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
         String topic = System.getenv().getOrDefault("KAFKA_TOPIC", "analytics-events");
         String checkpointDir = System.getenv().getOrDefault("SPARK_CHECKPOINT_DIR", "./spark-checkpoint");
