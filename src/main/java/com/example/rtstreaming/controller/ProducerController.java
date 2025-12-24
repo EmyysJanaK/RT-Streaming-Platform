@@ -34,13 +34,13 @@ public class ProducerController {
     public ResponseEntity<String> publishSampleEvent() {
         Map<String, Object> payload = new HashMap<>();
         payload.put("message", "Sample event");
-        AnalyticsEvent event = AnalyticsEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .eventType(EventType.LOG)
-                .source("test-api")
-                .timestamp(Instant.now())
-                .payload(payload)
-                .build();
+        AnalyticsEvent event = new AnalyticsEvent(
+            UUID.randomUUID().toString(),
+            EventType.LOG,
+            "test-api",
+            Instant.now(),
+            payload
+        );
         logger.info("Publishing sample event: {}", event);
         producer.sendEvent(event);
         return ResponseEntity.accepted().body("Sample event published");
