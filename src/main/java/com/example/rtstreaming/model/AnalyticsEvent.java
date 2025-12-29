@@ -14,19 +14,19 @@ import java.util.Map;
 @Builder
 public class AnalyticsEvent {
     @NotBlank
-    String eventId;
+    public String eventId;
 
     @NotNull
-    EventType eventType;
+    public EventType eventType;
 
     @NotBlank
-    String source;
+    public String source;
 
     @NotNull
-    Instant timestamp;
+    public Instant timestamp;
 
     @NotNull
-    Map<String, Object> payload;
+    public Map<String, Object> payload;
 
     @JsonCreator
     public AnalyticsEvent(

@@ -38,25 +38,17 @@ public class AnalyticsEventProducer {
 
     public void sendEvent(AnalyticsEvent event) {
         long start = System.nanoTime();
-        ListenableFuture<SendResult<String, AnalyticsEvent>> future =
-                kafkaTemplate.send(topic, event.getEventId(), event);
-        future.addCallback(new ListenableFutureCallback<>() {
-            @Override
-            public void onSuccess(SendResult<String, AnalyticsEvent> result) {
-                long duration = System.nanoTime() - start;
-                latencyTimer.record(duration, java.util.concurrent.TimeUnit.NANOSECONDS);
+        kafkaTemplate.send(topic, event.eventId, event).whenComplete((result, ex) -> {
+            long duration = System.nanoTime() - start;
+            latencyTimer.record(duration, java.util.concurrent.TimeUnit.NANOSECONDS);
+            if (ex == null) {
                 throughputCounter.increment();
-                logger.info("Sent event [{}] to topic {} partition {} offset {}", event.getEventId(),
+                logger.info("Sent event [{}] to topic {} partition {} offset {}", event.eventId,
                         result.getRecordMetadata().topic(),
                         result.getRecordMetadata().partition(),
                         result.getRecordMetadata().offset());
-            }
-
-            @Override
-            public void onFailure(Throwable ex) {
-                long duration = System.nanoTime() - start;
-                latencyTimer.record(duration, java.util.concurrent.TimeUnit.NANOSECONDS);
-                logger.error("Failed to send event [{}]", event.getEventId(), ex);
+            } else {
+                logger.error("Failed to send event [{}]", event.eventId, ex);
             }
         });
     }

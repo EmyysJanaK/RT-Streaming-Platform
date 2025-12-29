@@ -9,7 +9,7 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,10 +44,11 @@ public class StreamingLagMetrics {
             consumer.subscribe(Collections.singletonList(topic));
             consumer.poll(java.time.Duration.ofMillis(100));
             Map<TopicPartition, Long> endOffsets = consumer.endOffsets(consumer.assignment());
-            Map<TopicPartition, Long> currentOffsets = consumer.position(consumer.assignment());
             long totalLag = 0;
             for (TopicPartition tp : consumer.assignment()) {
-                long lagForPartition = endOffsets.getOrDefault(tp, 0L) - currentOffsets.getOrDefault(tp, 0L);
+                long endOffset = endOffsets.getOrDefault(tp, 0L);
+                long currentOffset = consumer.position(tp);
+                long lagForPartition = endOffset - currentOffset;
                 totalLag += Math.max(lagForPartition, 0);
             }
             lag.set(totalLag);
